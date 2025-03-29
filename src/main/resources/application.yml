@@ -1,0 +1,186 @@
+spring:
+  application:
+    name: transaction-recovery-service
+  
+  # Datasource Configuration
+  datasource:
+    url: jdbc:postgresql://localhost:5432/transaction_recovery
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      connection-timeout: 20000
+      maximum-pool-size: 10
+      minimum-idle: 5
+      idle-timeout: 300000
+      max-lifetime: 1200000
+  
+  # JPA Configuration
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc.batch_size: 50
+        order_inserts: true
+        order_updates: true
+    show-sql: false
+  
+  # Flyway Database Migration Configuration
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    
+  # Kafka Configuration
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: ${KAFKA_GROUP_ID:transaction-recovery}
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: com.company.transactionrecovery.infrastructure.kafka.dto
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+    topics:
+      transaction-events: ${KAFKA_TOPIC_TRANSACTIONS:transaction-events}
+      webhook-events: ${KAFKA_TOPIC_WEBHOOKS:webhook-events}
+      transaction-events.partitions: 3
+      webhook-events.partitions: 3
+      replication-factor: 1
+  
+  # Mail Configuration (for alerts)
+  mail:
+    host: ${MAIL_HOST:smtp.example.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:alerts@example.com}
+    password: ${MAIL_PASSWORD:password}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+
+# Server Configuration
+server:
+  port: ${SERVER_PORT:8080}
+  servlet:
+    context-path: /
+  tomcat:
+    max-threads: 200
+    min-spare-threads: 20
+
+# Application-specific Configuration
+application:
+  base-url: ${APP_BASE_URL:http://localhost:8080}
+
+# Transaction Configuration
+transaction:
+  timeout:
+    pending-minutes: ${TRANSACTION_PENDING_TIMEOUT:5}
+    processing-minutes: ${TRANSACTION_PROCESSING_TIMEOUT:10}
+  retry:
+    max-attempts: ${TRANSACTION_MAX_RETRIES:3}
+  monitor:
+    interval-ms: ${TRANSACTION_MONITOR_INTERVAL:60000}
+
+# Webhook Configuration
+webhook:
+  connection:
+    timeout-ms: ${WEBHOOK_CONN_TIMEOUT:5000}
+    keep-alive-ms: ${WEBHOOK_KEEPALIVE:30000}
+    validate-after-inactivity-ms: ${WEBHOOK_VALIDATE_INACTIVITY:10000}
+  socket:
+    timeout-ms: ${WEBHOOK_SOCKET_TIMEOUT:10000}
+  connection-request:
+    timeout-ms: ${WEBHOOK_REQ_TIMEOUT:2000}
+  max-total-connections: ${WEBHOOK_MAX_CONN:100}
+  max-connections-per-route: ${WEBHOOK_MAX_ROUTE_CONN:20}
+  retry:
+    max-attempts: ${WEBHOOK_MAX_RETRIES:5}
+    base-delay-seconds: ${WEBHOOK_RETRY_DELAY:60}
+    batch-size: ${WEBHOOK_RETRY_BATCH_SIZE:50}
+    enabled: ${WEBHOOK_RETRY_ENABLED:true}
+    max-age-hours: ${WEBHOOK_MAX_AGE_HOURS:24}
+    hang-timeout-minutes: ${WEBHOOK_HANG_TIMEOUT:30}
+  signature:
+    algorithm: ${WEBHOOK_SIG_ALGO:HmacSHA256}
+  default-max-retries: ${WEBHOOK_DEFAULT_MAX_RETRIES:5}
+  security:
+    token-length: ${WEBHOOK_TOKEN_LENGTH:32}
+
+# Anomaly Detection Configuration
+anomaly:
+  pending-threshold-minutes: ${ANOMALY_PENDING_THRESHOLD:30}
+  processing-threshold-minutes: ${ANOMALY_PROCESSING_THRESHOLD:60}
+  retry-threshold: ${ANOMALY_RETRY_THRESHOLD:5}
+  state-change-threshold: ${ANOMALY_STATE_CHANGE_THRESHOLD:10}
+
+# Alert Configuration
+alert:
+  email:
+    enabled: ${ALERT_EMAIL_ENABLED:false}
+    recipients: ${ALERT_EMAIL_RECIPIENTS:admin@example.com}
+    from: ${ALERT_EMAIL_FROM:alerts@example.com}
+
+# Scheduler Configuration
+scheduler:
+  monitor:
+    cron: ${SCHEDULER_MONITOR_CRON:0 * * * * *}
+  anomaly-detection:
+    cron: ${SCHEDULER_ANOMALY_CRON:0 */5 * * * *}
+    threshold: ${SCHEDULER_ANOMALY_THRESHOLD:5}
+  health-check:
+    cron: ${SCHEDULER_HEALTH_CRON:0 0 0 * * *}
+    enabled: ${SCHEDULER_HEALTH_ENABLED:true}
+  webhook-retry:
+    cron: ${SCHEDULER_WEBHOOK_RETRY_CRON:0 * * * * *}
+  webhook-hanging:
+    cron: ${SCHEDULER_WEBHOOK_HANGING_CRON:0 */10 * * * *}
+  webhook-cleanup:
+    cron: ${SCHEDULER_WEBHOOK_CLEANUP_CRON:0 0 2 * * *}
+  webhook-report:
+    cron: ${SCHEDULER_WEBHOOK_REPORT_CRON:0 0 0 * * 0}
+  reconciliation:
+    cron: ${SCHEDULER_RECONCILIATION_CRON:0 0 1 * * *}
+
+# Async Executor Configuration
+async:
+  core-pool-size: ${ASYNC_CORE_POOL_SIZE:5}
+  max-pool-size: ${ASYNC_MAX_POOL_SIZE:10}
+  queue-capacity: ${ASYNC_QUEUE_CAPACITY:25}
+  webhook:
+    core-pool-size: ${ASYNC_WEBHOOK_CORE_POOL_SIZE:10}
+    max-pool-size: ${ASYNC_WEBHOOK_MAX_POOL_SIZE:20}
+    queue-capacity: ${ASYNC_WEBHOOK_QUEUE_CAPACITY:50}
+  monitor:
+    core-pool-size: ${ASYNC_MONITOR_CORE_POOL_SIZE:2}
+    max-pool-size: ${ASYNC_MONITOR_MAX_POOL_SIZE:5}
+    queue-capacity: ${ASYNC_MONITOR_QUEUE_CAPACITY:10}
+
+# Security Configuration
+security:
+  jwt:
+    secret: ${JWT_SECRET:changeme_in_production_environment}
+    expiration: ${JWT_EXPIRATION:86400}
+  allowed-origins: ${ALLOWED_ORIGINS:*}
+
+# Logging Configuration
+logging:
+  level:
+    root: INFO
+    com.company.transactionrecovery: INFO
+    org.springframework: WARN
+    org.hibernate: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: ${LOG_FILE:logs/transaction-recovery-service.log}
+    max-size: ${LOG_MAX_SIZE:10MB}
+    max-history: ${LOG_MAX_HISTORY:7}

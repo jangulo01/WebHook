@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Import Spring boot default configurations -->
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <!-- Variables from application properties -->
+    <springProperty scope="context" name="LOG_FILE" source="logging.file.name" defaultValue="logs/transaction-recovery-service.log"/>
+    <springProperty scope="context" name="LOG_MAX_SIZE" source="logging.file.max-size" defaultValue="10MB"/>
+    <springProperty scope="context" name="LOG_MAX_HISTORY" source="logging.file.max-history" defaultValue="7"/>
+    <springProperty scope="context" name="APP_NAME" source="spring.application.name" defaultValue="transaction-recovery-service"/>
+    
+    <!-- Properties -->
+    <property name="CONSOLE_LOG_PATTERN" value="%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"/>
+    <property name="FILE_LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:-%5p} ${PID:- } --- [%t] %-40.40logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"/>
+    
+    <!-- Console Appender -->
+    <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+            <charset>utf8</charset>
+        </encoder>
+    </appender>
+    
+    <!-- File Appender -->
+    <appender name="File" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_FILE}</file>
+        <encoder>
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+            <charset>utf8</charset>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_FILE}.%d{yyyy-MM-dd}.%i.gz</fileNamePattern>
+            <maxFileSize>${LOG_MAX_SIZE}</maxFileSize>
+            <maxHistory>${LOG_MAX_HISTORY}</maxHistory>
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+    
+    <!-- Special Appender for Webhook Related Logs -->
+    <appender name="WebhookFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/webhook.log</file>
+        <encoder>
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+            <charset>utf8</charset>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/webhook.%d{yyyy-MM-dd}.%i.gz</fileNamePattern>
+            <maxFileSize>${LOG_MAX_SIZE}</maxFileSize>
+            <maxHistory>${LOG_MAX_HISTORY}</maxHistory>
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+    
+    <!-- Special Appender for Transaction Related Logs -->
+    <appender name="TransactionFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/transaction.log</file>
+        <encoder>
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+            <charset>utf8</charset>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/transaction.%d{yyyy-MM-dd}.%i.gz</fileNamePattern>
+            <maxFileSize>${LOG_MAX_SIZE}</maxFileSize>
+            <maxHistory>${LOG_MAX_HISTORY}</maxHistory>
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+    
+    <!-- Special Appender for Alert Related Logs -->
+    <appender name="AlertFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/alert.log</file>
+        <encoder>
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+            <charset>utf8</charset>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/alert.%d{yyyy-MM-dd}.%i.gz</fileNamePattern>
+            <maxFileSize>${LOG_MAX_SIZE}</maxFileSize>
+            <maxHistory>${LOG_MAX_HISTORY}</maxHistory>
+            <totalSizeCap>500MB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+    
+    <!-- Special Appender for Error Logs -->
+    <appender name="ErrorFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/error.log</file>
+        <encoder>
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+            <charset>utf8</charset>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/error.%d{yyyy-MM-dd}.%i.gz</fileNamePattern>
+            <maxFileSize>${LOG_MAX_SIZE}</maxFileSize>
+            <maxHistory>${LOG_MAX_HISTORY}</maxHistory>
+            <totalSizeCap>500MB</totalSizeCap>
+        </rollingPolicy>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>ERROR</level>
+        </filter>
+    </appender>
+    
+    <!-- Async Appenders for better performance -->
+    <appender name="AsyncFile" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="File" />
+        <queueSize>512</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+    </appender>
+    
+    <appender name="AsyncWebhookFile" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="WebhookFile" />
+        <queueSize>512</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+    </appender>
+    
+    <appender name="AsyncTransactionFile" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="TransactionFile" />
+        <queueSize>512</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+    </appender>
+    
+    <appender name="AsyncErrorFile" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="ErrorFile" />
+        <queueSize>512</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+    </appender>
+    
+    <appender name="AsyncAlertFile" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="AlertFile" />
+        <queueSize>512</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+    </appender>
+    
+    <!-- Logger Configurations -->
+    
+    <!-- Webhook Loggers -->
+    <logger name="com.company.transactionrecovery.domain.service.webhook" level="INFO" additivity="true">
+        <appender-ref ref="AsyncWebhookFile" />
+    </logger>
+    
+    <logger name="com.company.transactionrecovery.infrastructure.http.WebhookClient" level="INFO" additivity="true">
+        <appender-ref ref="AsyncWebhookFile" />
+    </logger>
+    
+    <logger name="webhook.rejection" level="WARN" additivity="true">
+        <appender-ref ref="AsyncWebhookFile" />
+    </logger>
+    
+    <!-- Transaction Loggers -->
+    <logger name="com.company.transactionrecovery.domain.service.transaction" level="INFO" additivity="true">
+        <appender-ref ref="AsyncTransactionFile" />
+    </logger>
+    
+    <logger name="com.company.transactionrecovery.api.controller.TransactionController" level="INFO" additivity="true">
+        <appender-ref ref="AsyncTransactionFile" />
+    </logger>
+    
+    <!-- Alert Logger -->
+    <logger name="com.company.transactionrecovery.domain.service.monitor.AlertService" level="INFO" additivity="true">
+        <appender-ref ref="AsyncAlertFile" />
+    </logger>
+    
+    <!-- Specific package levels -->
+    <logger name="com.company.transactionrecovery" level="INFO" />
+    <logger name="org.springframework" level="WARN" />
+    <logger name="org.hibernate" level="WARN" />
+    <logger name="org.apache.kafka" level="WARN" />
+    <logger name="org.apache.http" level="WARN" />
+    
+    <!-- Specific logger for database queries in dev env -->
+    <springProfile name="dev">
+        <logger name="org.hibernate.SQL" level="DEBUG" />
+        <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="TRACE" />
+    </springProfile>
+    
+    <!-- Root Logger -->
+    <root level="INFO">
+        <appender-ref ref="Console" />
+        <appender-ref ref="AsyncFile" />
+        <appender-ref ref="AsyncErrorFile" />
+    </root>
+</configuration>
